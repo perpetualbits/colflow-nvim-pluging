@@ -156,6 +156,14 @@ function M.apply_anchor_topline(anchor_topline, window_height)
     -- Convert 1-based list index to 0-based column index for the offset formula
     local column_index = list_index - 1
 
+    -- A managed window may have been closed externally (e.g. :q) between the
+    -- WinClosed event and the vim.schedule'd close() that cleans up state.
+    -- Skip invalid windows rather than crashing; the scheduled close() will
+    -- remove them from state momentarily.
+    if not vim.api.nvim_win_is_valid(win_id) then
+      return
+    end
+
     -- Desired topline for this column: anchor offset by column_index * height
     local desired_topline = anchor_topline + column_index * window_height
 

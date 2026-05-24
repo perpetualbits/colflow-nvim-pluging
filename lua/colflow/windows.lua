@@ -233,8 +233,10 @@ function M.close_extra_windows()
   for list_index = #windows, 2, -1 do
     local win_id = windows[list_index]
 
-    -- Only attempt to close the window if it still exists
-    if vim.api.nvim_win_is_valid(win_id) then
+    -- Only attempt to close the window if it still exists and is not the last
+    -- window. E444 fires if you close the last window; this happens when the
+    -- user already closed the anchor and only non-anchor colflow windows remain.
+    if vim.api.nvim_win_is_valid(win_id) and #vim.api.nvim_list_wins() > 1 then
       -- force = false means an unsaved buffer will block the close and show an
       -- error. The user's data is preserved; they see their original single window.
       vim.api.nvim_win_close(win_id, false)
@@ -253,6 +255,15 @@ function M.on_resize()
   -- Nothing to do if colflow is inactive (belt-and-suspenders guard)
   if #windows == 0 then
     return 0
+  end
+
+  -- A managed window may have been closed externally just before this resize
+  -- event fired (WinResized is synchronous; the WinClosed cleanup is deferred
+  -- via vim.schedule). Bail out safely — the scheduled close() will follow.
+  for _, win_id in ipairs(windows) do
+    if not vim.api.nvim_win_is_valid(win_id) then
+      return 0
+    end
   end
 
   -- Re-equalize widths first; the new height we read below will be post-equalization
