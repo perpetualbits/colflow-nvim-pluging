@@ -176,14 +176,19 @@ function M.open(n)
     -- Split from the rightmost existing column so each new window appears further right
     local rightmost_win = ordered_windows[#ordered_windows]
 
+    -- Capture the new window ID INSIDE the nvim_win_call callback.
+    -- nvim_win_call restores the focused window after the callback returns, so
+    -- calling nvim_get_current_win() OUTSIDE would return the anchor again.
+    -- Inside the callback, vsplit has already moved focus to the new window
+    -- (because splitright = true), so nvim_get_current_win() returns the new ID.
+    local new_win_id
     vim.api.nvim_win_call(rightmost_win, function()
       -- :vsplit opens a new vertical split showing the same buffer; we re-set the
       -- buffer explicitly below for safety in case an autocmd changes it
       vim.cmd("vsplit")
+      -- Grab the new window ID now, while focus is still on it inside the callback
+      new_win_id = vim.api.nvim_get_current_win()
     end)
-
-    -- The new window is now current because splitright = true places focus there
-    local new_win_id = vim.api.nvim_get_current_win()
 
     -- Ensure the new window shows the anchor buffer (vsplit inherits it, but an
     -- explicit set protects against BufWinEnter autocmds that might change it)
