@@ -74,3 +74,10 @@ require("colflow").setup({
   hide_numbers    = "none",   -- "none" avoids option-setting errors in headless env
   keymaps         = {},       -- no keymaps in tests
 })
+
+-- Register the :ColflowOpen / Close / Toggle / Inc / Dec commands.
+-- plugin/colflow.lua is the normal entry point for this, but it is not
+-- auto-sourced when Neovim starts with -u <minimal_init>. We register
+-- commands explicitly so integration tests that call vim.cmd("ColflowOpen 3")
+-- work correctly.
+require("colflow.commands").register()

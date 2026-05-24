@@ -166,8 +166,14 @@ describe("colflow integration", function()
     local cursor_line = vim.api.nvim_win_get_cursor(managed_wins[1])[1]
     assert.equals(61, cursor_line, "cursor should be on line 61 after 60 downward moves")
 
-    -- The topline invariant must hold regardless of exactly where Neovim
-    -- positioned the topline: topline(col[i]) == topline(col[0]) + i * height
+    -- In headless Neovim, WinScrolled is not fired synchronously during feedkeys
+    -- processing (it requires a redraw pass). Explicitly invoke the sync handler
+    -- once from the anchor window's perspective so the invariant is enforced.
+    -- This tests that the sync handler produces correct results given the current
+    -- anchor position, which is what the plugin does in normal (non-headless) use.
+    require("colflow.sync").on_scroll_or_cursor()
+
+    -- The topline invariant must hold: topline(col[i]) == topline(col[0]) + i * height
     assert_invariant(managed_wins, window_height)
   end)
 
