@@ -204,6 +204,14 @@ function M.open(n)
   -- wincmd = distributes available width evenly across all windows in the tabpage.
   vim.cmd("wincmd =")
 
+  -- Snapshot the anchor window's current option values before we modify them.
+  -- close() will restore these so the user's settings survive a colflow session.
+  state.set_saved_anchor_options({
+    wrap       = vim.api.nvim_get_option_value("wrap",       { win = anchor_win_id }),
+    foldenable = vim.api.nvim_get_option_value("foldenable", { win = anchor_win_id }),
+    winbar     = vim.api.nvim_get_option_value("winbar",     { win = anchor_win_id }),
+  })
+
   -- Configure display options for each window (wrap, folds, numbers, signcolumn)
   for list_index, win_id in ipairs(ordered_windows) do
     local is_anchor = (list_index == 1)
@@ -295,6 +303,24 @@ function M.on_resize()
   end
 
   return new_height
+end
+
+-- Restores the anchor window's option values that were saved before open()
+-- modified them.  Called by init.close() so colflow does not permanently
+-- clobber the user's wrap, foldenable, or winbar settings.
+function M.restore_anchor_options()
+  local windows = state.get_windows()
+  if #windows == 0 then return end
+
+  local anchor_win_id = windows[1]
+  local opts          = state.get_saved_anchor_options()
+
+  -- Nothing to restore if the snapshot is missing or the window is gone
+  if not opts or not vim.api.nvim_win_is_valid(anchor_win_id) then return end
+
+  vim.api.nvim_set_option_value("wrap",       opts.wrap,       { win = anchor_win_id })
+  vim.api.nvim_set_option_value("foldenable", opts.foldenable, { win = anchor_win_id })
+  vim.api.nvim_set_option_value("winbar",     opts.winbar,     { win = anchor_win_id })
 end
 
 return M

@@ -41,6 +41,11 @@ local augroup_id = nil
 -- a circular dependency).
 local config = {}
 
+-- Option values saved from the anchor window just before colflow modifies
+-- them.  Restored on close() so the user's original wrap/fold/winbar settings
+-- are not permanently clobbered.
+local saved_anchor_options = nil
+
 -- -----------------------------------------------------------------------------
 -- State accessors (read-only)
 -- -----------------------------------------------------------------------------
@@ -118,14 +123,26 @@ function M.set_augroup_id(new_augroup_id)
   augroup_id = new_augroup_id
 end
 
+-- Stores the option values snapshotted from the anchor window before open()
+-- modifies them (wrap, foldenable, winbar).  Called by windows.open().
+function M.set_saved_anchor_options(opts)
+  saved_anchor_options = opts
+end
+
+-- Returns the saved anchor option snapshot, or nil if open() hasn't run yet.
+function M.get_saved_anchor_options()
+  return saved_anchor_options
+end
+
 -- Resets all module state to the initial empty values.
 -- Called by close() after all managed windows have been torn down.
 -- config is intentionally preserved so setup() does not need to be called again.
 function M.clear()
-  active          = false
-  managed_windows = {}
-  anchor_bufnr    = nil
-  augroup_id      = nil
+  active                = false
+  managed_windows       = {}
+  anchor_bufnr          = nil
+  augroup_id            = nil
+  saved_anchor_options  = nil
 end
 
 -- -----------------------------------------------------------------------------

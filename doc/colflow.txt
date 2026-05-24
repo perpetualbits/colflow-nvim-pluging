@@ -1,0 +1,243 @@
+*colflow.txt*   Newspaper-flow column layout for Neovim
+
+Author:  Roland Nagtegaal
+License: MIT
+Repo:    https://github.com/perpetualbits/colflow-nvim-plugin
+
+===========================================================================
+CONTENTS                                               *colflow-contents*
+
+  1. Introduction .................. |colflow-intro|
+  2. Requirements .................. |colflow-requirements|
+  3. Setup ......................... |colflow-setup|
+  4. Configuration ................. |colflow-config|
+  5. Commands ...................... |colflow-commands|
+  6. Keymaps ....................... |colflow-keymaps|
+  7. Statusline .................... |colflow-statusline|
+  8. Health check .................. |colflow-health|
+  9. Limitations ................... |colflow-limitations|
+
+===========================================================================
+1. INTRODUCTION                                           *colflow-intro*
+
+colflow.nvim displays a single buffer in N newspaper-style columns via
+vertical splits. All columns scroll in lockstep, so the document reads
+continuously from top-left to bottom-right like a folded broadsheet.
+
+  ┌────────────┬────────────┬────────────┐
+  │ Line 001   │ Line 049   │ Line 097   │
+  │ Line 002   │ Line 050   │ Line 098   │
+  │    ...     │    ...     │    ...     │
+  │ Line 048   │ Line 096   │ Line 144   │
+  └────────────┴────────────┴────────────┘
+
+Column 0 (leftmost) is the anchor. Scrolling in any column re-derives the
+anchor topline and shifts every other column by one viewport height:
+
+  topline(col[i]) == topline(col[0]) + i * window_height
+
+All columns share the same buffer, so edits are immediately visible across
+the whole layout.
+
+===========================================================================
+2. REQUIREMENTS                                    *colflow-requirements*
+
+  - Neovim >= 0.9.0
+  - plenary.nvim (optional; only needed to run the test suite)
+
+===========================================================================
+3. SETUP                                                 *colflow-setup*
+
+Install with lazy.nvim: >lua
+
+    {
+      "perpetualbits/colflow-nvim-plugin",
+      config = function()
+        require("colflow").setup({})   -- accepts an options table; see |colflow-config|
+      end,
+    }
+<
+
+Install with packer.nvim: >lua
+
+    use {
+      "perpetualbits/colflow-nvim-plugin",
+      config = function() require("colflow").setup({}) end,
+    }
+<
+
+Install with vim-plug: >vim
+
+    Plug 'perpetualbits/colflow-nvim-plugin'
+    " then in your Lua config:
+    lua require("colflow").setup({})
+<
+
+`setup()` must be called before using any commands or keymaps.  Calling it
+more than once is safe; each call replaces the previous configuration.
+
+===========================================================================
+4. CONFIGURATION                                        *colflow-config*
+
+Pass a table of overrides to `setup()`: >lua
+
+    require("colflow").setup({
+      columns         = 3,
+      min_col_width   = 40,
+      hide_signcolumn = true,
+      hide_numbers    = "rightmost-only",
+      keymaps = {
+        toggle = "<leader>cf",
+        inc    = "<leader>c+",
+        dec    = "<leader>c-",
+      },
+    })
+<
+
+All keys are optional; unspecified keys keep their defaults.
+
+                                                  *colflow-config-columns*
+columns ~
+    Type: `integer`    Default: `3`
+    Number of columns opened by |:ColflowOpen| when called without an
+    argument, and by |:ColflowToggle| when opening.
+
+                                             *colflow-config-min_col_width*
+min_col_width ~
+    Type: `integer`    Default: `40`
+    Minimum column width in characters.  If the current window is too
+    narrow to fit N columns of this width, the column count is silently
+    reduced until each column is at least this wide.
+
+                                          *colflow-config-hide_signcolumn*
+hide_signcolumn ~
+    Type: `boolean`    Default: `true`
+    When `true`, hides the sign column (git status, diagnostic icons) in
+    all non-anchor columns.  Signs still appear in the anchor (column 0).
+
+                                            *colflow-config-hide_numbers*
+hide_numbers ~
+    Type: `string`    Default: `"rightmost-only"`
+    Controls line-number visibility in managed columns.
+
+    `"all"`             Hide numbers in every managed column, including the
+                        anchor.
+    `"rightmost-only"`  Hide numbers in all columns except the rightmost;
+                        the rightmost column keeps the numbers inherited
+                        from the anchor window settings.
+    `"none"`            Leave all number settings untouched.
+
+                                                 *colflow-config-keymaps*
+keymaps ~
+    Type: `table`
+    Normal-mode key bindings registered globally by `setup()`.  Set any
+    entry to `nil` or `false` to disable that binding.
+
+    Key       Default          Action ~
+    `toggle`  `<leader>cf`     Toggle the column layout on/off
+    `open`    `nil`            Explicitly open the layout
+    `close`   `nil`            Explicitly close the layout
+    `inc`     `<leader>c+`     Add one column
+    `dec`     `<leader>c-`     Remove one column
+
+===========================================================================
+5. COMMANDS                                           *colflow-commands*
+
+                                                          *:ColflowOpen*
+:ColflowOpen [N]
+    Open N newspaper-flow columns (default: |colflow-config-columns|).
+    If a layout is already open it is closed and re-opened with the new
+    count.  The column count may be reduced if the window is too narrow
+    (see |colflow-config-min_col_width|).
+
+                                                         *:ColflowClose*
+:ColflowClose
+    Close the column layout and restore the single-window view.  The
+    anchor window's original option values (`wrap`, `foldenable`, `winbar`)
+    are restored.
+
+                                                        *:ColflowToggle*
+:ColflowToggle [N]
+    Open N columns if the layout is currently closed; close it if open.
+
+                                                           *:ColflowInc*
+:ColflowInc
+    Add one column to the current layout.  If colflow is not active, opens
+    with (config.columns + 1) columns.
+
+                                                           *:ColflowDec*
+:ColflowDec
+    Remove one column from the current layout (minimum 1 column).  Reducing
+    to 1 column calls |:ColflowClose| for a clean teardown.
+
+===========================================================================
+6. KEYMAPS                                             *colflow-keymaps*
+
+Default keymaps registered by `setup()` (override via |colflow-config-keymaps|):
+
+    `<leader>cf`   Toggle the column layout on/off (|:ColflowToggle|)
+    `<leader>c+`   Add one column (|:ColflowInc|)
+    `<leader>c-`   Remove one column (|:ColflowDec|)
+
+===========================================================================
+7. STATUSLINE                                       *colflow-statusline*
+
+colflow exposes a statusline helper function: >lua
+
+    require("colflow").statusline()
+<
+
+Returns `"[col:N]"` when N columns are active, or `""` when colflow is
+inactive, so the component disappears automatically.
+
+lualine integration: >lua
+
+    require("lualine").setup({
+      sections = {
+        lualine_x = {
+          { require("colflow").statusline },
+          "encoding", "fileformat", "filetype",
+        },
+      },
+    })
+<
+
+Plain `statusline` option: >lua
+
+    vim.o.statusline = "%{%v:lua.require('colflow').statusline()%} ..."
+<
+
+===========================================================================
+8. HEALTH CHECK                                         *colflow-health*
+
+Run `:checkhealth colflow` to verify:
+
+  - Neovim version is >= 0.9.0
+  - plenary.nvim is available (for running the test suite)
+  - Current active state and column count
+
+===========================================================================
+9. LIMITATIONS                                      *colflow-limitations*
+
+`wrap` is forced off ~
+    The topline offset formula counts buffer lines.  If `wrap` were on, a
+    long line would occupy multiple visual rows, breaking the invariant.
+    This is a v1 limitation.
+
+Folds are disabled ~
+    A folded region occupies zero visual rows but multiple buffer lines,
+    which would shift column offsets incorrectly.  `foldenable` is set to
+    `false` in all managed windows.  Your fold settings are restored when
+    colflow is closed.
+
+All columns must show the same buffer ~
+    Opening a different file in a managed window triggers an automatic
+    teardown of the layout.
+
+Multiple tabpages ~
+    colflow manages windows in the active tabpage only.  Opening a new tab
+    while colflow is active is safe; the layout does not follow to the new
+    tab.
+
+===========================================================================
+vim:tw=78:ts=8:ft=help:norl:

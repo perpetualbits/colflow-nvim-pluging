@@ -1,0 +1,46 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim (stable)
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Install plenary.nvim
+        run: |
+          git clone --depth 1 \
+            https://github.com/nvim-lua/plenary.nvim \
+            /tmp/plenary.nvim
+
+      - name: Run tests
+        run: |
+          PLUGIN_DIR="$(pwd)"
+          PLENARY_DIR="/tmp/plenary.nvim"
+          fail=0
+
+          for f in tests/test_*.lua; do
+            echo "────────────────────────────────────────"
+            echo "Running: $f"
+            echo "────────────────────────────────────────"
+            nvim --headless --noplugin \
+              -u tests/minimal_init.lua \
+              -c "set rtp+=${PLUGIN_DIR},${PLENARY_DIR} | runtime plugin/plenary.vim" \
+              -c "lua require('plenary.busted').run('${f}')" \
+              2>&1 || fail=1
+          done
+
+          exit $fail

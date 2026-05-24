@@ -184,6 +184,11 @@ function M.close()
   -- Windows already closed by the user are skipped silently.
   windows.close_extra_windows()
 
+  -- Restore wrap, foldenable, and winbar on the anchor window to the values
+  -- they had before open() modified them. Must run before state.clear() wipes
+  -- the saved snapshot and the managed_windows list.
+  windows.restore_anchor_options()
+
   -- Reset all module state; config is preserved for the next open() call
   state.clear()
 end
@@ -246,6 +251,27 @@ function M.dec()
     -- Re-open with one fewer column
     M.open(new_count)
   end
+end
+
+-- =============================================================================
+-- statusline()
+-- =============================================================================
+
+-- Returns a short statusline string for use in lualine, heirline, or a plain
+-- statusline expression.  Returns "[col:N]" when N columns are active, or ""
+-- when colflow is inactive (so the component vanishes when not in use).
+--
+-- Lualine example:
+--   require("lualine").setup({
+--     sections = { lualine_x = { require("colflow").statusline } },
+--   })
+--
+-- Plain statusline example:
+--   vim.o.statusline = "%{%v:lua.require('colflow').statusline()%} ..."
+function M.statusline()
+  local state = require("colflow.state")
+  if not state.is_active() then return "" end
+  return string.format("[col:%d]", state.get_column_count())
 end
 
 return M
