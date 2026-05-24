@@ -1,8 +1,8 @@
 *colflow.txt*   Newspaper-flow column layout for Neovim
 
 Author:  Roland Nagtegaal
-License: GNU General Public License v3.0 (GPL-3.0)
-Repo:    https://github.com/perpetualbits/colflow-nvim-plugin
+License: GNU General Public License v3.0 or later (GPL-3.0-or-later)
+Repo:    https://github.com/perpetualbits/colflow.nvim
 
 ===========================================================================
 CONTENTS                                               *colflow-contents*

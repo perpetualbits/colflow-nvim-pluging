@@ -244,8 +244,8 @@ require("lualine").setup({
 
 ## License
 
-GNU General Public License v3.0 — see [LICENSE](LICENSE).
+GNU General Public License v3.0 or later (`GPL-3.0-or-later`) — see [LICENSE](LICENSE).
 
 colflow.nvim is free software: you can redistribute it and/or modify it under
-the terms of the GPL-3.0, ensuring that any forks or derivative works remain
-open source under the same terms.
+the terms of the GNU GPL, version 3 or any later version, ensuring that any
+forks or derivative works remain open source under the same terms.
