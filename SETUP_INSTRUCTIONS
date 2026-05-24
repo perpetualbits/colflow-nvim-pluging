@@ -1,0 +1,28 @@
+SETUP INSTRUCTIONS
+
+- Put your settings in ~/.config/gitrepo-init.conf:
+  - GitHub: GITHUB_TOKEN (repo:create), optional GITHUB_ORG/GITHUB_USER
+  - GitLab: GITLAB_BASE_URL, GITLAB_TOKEN (api), GITLAB_NAMESPACE_PATH or GITLAB_NAMESPACE_ID
+  - Identities:
+      GITHUB_USER_NAME / GITHUB_USER_EMAIL
+      GITLAB_USER_NAME / GITLAB_USER_EMAIL
+  - DEFAULT_IDENTITY = github|gitlab (which identity to write to this repo)
+
+- Add your SSH public key to both GitHub and GitLab accounts.
+
+- Usage pattern (directory is positional arg; name is short slug):
+    init-remote-repo.sh ~/git/myrepo --name myrepo --both --identity gitlab
+
+- Note: a single commit has one author identity. Pushing the *same* commit to both
+  providers shows the same identity everywhere. This tool sets the repo-local
+  identity to your chosen PRIMARY identity; you can 'git config user.*' to switch
+  for specific commits.
+
+Troubleshooting:
+- GitHub 404 on create: token likely fine-grained without repo-creation permission
+  (use classic 'repo' scope or enable repo creation).
+- GitLab 400 on create: invalid namespace/path or disallowed 'public' visibility.
+
+IDENTITY CURRENTLY SET TO: github
+user.name  = Roland Nagtegaal
+user.email = perpetualbits@gmail.com
