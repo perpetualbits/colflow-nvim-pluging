@@ -2,7 +2,7 @@
 
 Read and edit a buffer in newspaper-flow columns.
 
-> **Demo:** *[record asciinema of :ColflowOpen 3 on a long file here]*
+![colflow demo](demo.gif)
 
 ---
 
@@ -58,7 +58,7 @@ plugin drives it from autocmds.
 
 ```lua
 {
-  "your-github-username/colflow.nvim",
+  "perpetualbits/colflow.nvim",
   config = function()
     require("colflow").setup({
       -- see Configuration below
@@ -71,7 +71,7 @@ plugin drives it from autocmds.
 
 ```lua
 use {
-  "your-github-username/colflow.nvim",
+  "perpetualbits/colflow.nvim",
   config = function()
     require("colflow").setup({})
   end,
@@ -81,7 +81,7 @@ use {
 ### vim-plug
 
 ```vim
-Plug 'your-github-username/colflow.nvim'
+Plug 'perpetualbits/colflow.nvim'
 ```
 
 Then in your `init.lua`:
@@ -223,4 +223,29 @@ Individual test files:
 
 3. **Closing:** `close()` deletes the autocmd group first (so the `WinClosed`
    events fired by closing extra windows don't re-trigger the handler), then
-   closes all non-anchor windows, then clears state.
+   closes all non-anchor windows, restores the anchor's original window options
+   (`wrap`, `foldenable`, `winbar`), then clears state.
+
+---
+
+## Statusline integration
+
+`require("colflow").statusline()` returns `"[col:N]"` when active, `""` when
+not — drop it into lualine, heirline, or your plain `statusline` option:
+
+```lua
+-- lualine
+require("lualine").setup({
+  sections = { lualine_x = { require("colflow").statusline } },
+})
+```
+
+---
+
+## License
+
+GNU General Public License v3.0 — see [LICENSE](LICENSE).
+
+colflow.nvim is free software: you can redistribute it and/or modify it under
+the terms of the GPL-3.0, ensuring that any forks or derivative works remain
+open source under the same terms.
